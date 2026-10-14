@@ -53,7 +53,6 @@ import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallbac
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
 import de.danoeh.antennapod.playback.service.internal.SkipUtils;
 import de.danoeh.antennapod.playback.service.internal.SleepTimer;
-import de.danoeh.antennapod.playback.service.internal.SwipeActionCommands;
 import de.danoeh.antennapod.playback.service.internal.ClockSleepTimer;
 import de.danoeh.antennapod.playback.service.internal.EpisodeSleepTimer;
 import de.danoeh.antennapod.storage.database.DBReader;
@@ -257,7 +256,6 @@ public class Media3PlaybackService extends MediaLibraryService {
         player.addListener(playerListener);
         mediaSession = new MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
                 .setSessionActivity(new MainActivityStarter(this).withOpenPlayer().getPendingIntent())
-                .setCommandButtonsForMediaItems(SwipeActionCommands.getCommandButtons(this))
                 .build();
         if (isCasting()) {
             keepServiceRunningWhileCasting();

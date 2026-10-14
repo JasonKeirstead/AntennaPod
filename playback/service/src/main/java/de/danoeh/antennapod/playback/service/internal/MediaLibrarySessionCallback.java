@@ -40,7 +40,6 @@ import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.event.playback.SleepTimerUpdatedEvent;
 import org.greenrobot.eventbus.EventBus;
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -124,7 +123,6 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 .add(SESSION_COMMAND_SET_SLEEP_TIMER)
                 .add(SESSION_COMMAND_DISABLE_SLEEP_TIMER)
                 .add(SESSION_COMMAND_EXTEND_SLEEP_TIMER)
-                .addSessionCommands(SwipeActionCommands.getSessionCommands())
                 .build();
         Player.Commands playerCommands = new Player.Commands.Builder()
                 .addAllCommands()
@@ -241,28 +239,8 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
         } else if (customCommand.customAction.equals(SESSION_COMMAND_SKIP_EPISODE.customAction)) {
             session.getPlayer().seekToNextMediaItem();
             return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
-        } else if (SwipeActionCommands.isSwipeActionCommand(customCommand)) {
-            SettableFuture<SessionResult> future = SettableFuture.create();
-            Maybe.fromCallable(() -> SwipeActionCommands.performAction(context, customCommand, args))
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(item -> {
-                        notifyEpisodeListsChanged((MediaLibraryService.MediaLibrarySession) session, item);
-                        future.set(new SessionResult(SessionResult.RESULT_SUCCESS));
-                    }, error -> {
-                        Log.e(TAG, "Failed to perform swipe action", error);
-                        future.set(new SessionResult(SessionError.ERROR_UNKNOWN));
-                    }, () -> future.set(new SessionResult(SessionError.ERROR_BAD_VALUE)));
-            return future;
         }
         return Futures.immediateFuture(new SessionResult(SessionError.ERROR_NOT_SUPPORTED));
-    }
-
-    private void notifyEpisodeListsChanged(MediaLibraryService.MediaLibrarySession session, FeedItem item) {
-        for (String parentId : ImmutableList.of(MEDIA_ID_QUEUE, MEDIA_ID_DOWNLOADS, MEDIA_ID_EPISODES,
-                MEDIA_ID_CONTINUE_LISTENING, MediaItemAdapter.MEDIA_ID_FEED_PREFIX + item.getFeedId())) {
-            session.notifyChildrenChanged(parentId, Integer.MAX_VALUE, null);
-        }
     }
 
     @Override
@@ -512,24 +490,10 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 })
                         .subscribeOn(Schedulers.io())
                         .subscribe(items -> future.set(LibraryResult.ofItemList(
-                                        SwipeActionCommands.addToMediaItems(context, getSwipeActionsTag(parentId),
-                                                MediaItemAdapter.fromItemList(context, items)), params)),
+                                        MediaItemAdapter.fromItemList(context, items), params)),
                                 future::setException);
                 return future;
         }
-    }
-
-    @Nullable
-    private static String getSwipeActionsTag(String parentId) {
-        if (parentId.startsWith(MediaItemAdapter.MEDIA_ID_FEED_PREFIX)) {
-            return SwipeActionCommands.TAG_FEED;
-        }
-        return switch (parentId) {
-            case MEDIA_ID_QUEUE -> SwipeActionCommands.TAG_QUEUE;
-            case MEDIA_ID_DOWNLOADS -> SwipeActionCommands.TAG_DOWNLOADS;
-            case MEDIA_ID_EPISODES -> SwipeActionCommands.TAG_EPISODES;
-            default -> null;
-        };
     }
 
     @Override
