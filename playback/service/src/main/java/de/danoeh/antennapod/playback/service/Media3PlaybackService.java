@@ -9,7 +9,10 @@ import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
+import androidx.car.app.connection.CarConnection;
 import androidx.core.util.Pair;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.media3.common.DeviceInfo;
 import androidx.media3.common.ForwardingPlayer;
 import androidx.media3.common.MediaItem;
@@ -101,6 +104,9 @@ public class Media3PlaybackService extends MediaLibraryService {
     @Nullable
     private LoudnessEnhancer loudnessEnhancer = null;
     private float volumeAdaptionFactor = 1.0f;
+    private LiveData<Integer> androidAutoConnectionState;
+    private boolean androidAutoConnected = false;
+    private Observer<Integer> androidAutoConnectionObserver;
 
     @UnstableApi
     @Override
@@ -257,6 +263,12 @@ public class Media3PlaybackService extends MediaLibraryService {
         mediaSession = new MediaLibraryService.MediaLibrarySession.Builder(this, player, sessionCallback)
                 .setSessionActivity(new MainActivityStarter(this).withOpenPlayer().getPendingIntent())
                 .build();
+        androidAutoConnectionState = new CarConnection(this).getType();
+        androidAutoConnectionObserver = connectionState -> {
+            androidAutoConnected = connectionState == CarConnection.CONNECTION_TYPE_PROJECTION;
+            sessionCallback.refreshNotification(mediaSession);
+        };
+        androidAutoConnectionState.observeForever(androidAutoConnectionObserver);
         if (isCasting()) {
             keepServiceRunningWhileCasting();
             loadCurrentMediaWhileCasting();
@@ -327,8 +339,36 @@ public class Media3PlaybackService extends MediaLibraryService {
             } else if (customCommand.customAction.equals(SESSION_COMMAND_EXTEND_SLEEP_TIMER.customAction)) {
                 extendSleepTimer(MediaLibrarySessionCallback.getLong(args, 0));
                 return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+            } else if (customCommand.customAction.equals(SESSION_COMMAND_MARK_PLAYED.customAction)) {
+                if (currentPlayable != null) {
+                    saveCurrentPosition();
+                    handlePlaybackEnded();
+                }
+                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+            } else if (customCommand.customAction.equals(SESSION_COMMAND_REMOVE_FROM_QUEUE.customAction)) {
+                if (currentPlayable != null && currentPlayable.getItem() != null) {
+                    DBWriter.removeQueueItem(Media3PlaybackService.this, true, currentPlayable.getItem());
+                }
+                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
+            } else if (customCommand.customAction.equals(SESSION_COMMAND_TOGGLE_FAVORITE.customAction)) {
+                if (currentPlayable != null && currentPlayable.getItem() != null) {
+                    DBWriter.toggleFavoriteItem(currentPlayable.getItem());
+                    refreshNotification(mediaSession);
+                }
+                return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
             }
             return super.onCustomCommand(session, controller, customCommand, args);
+        }
+
+        @Override
+        protected boolean isAndroidAutoConnected() {
+            return androidAutoConnected;
+        }
+
+        @Override
+        protected boolean isCurrentEpisodeFavorite() {
+            return currentPlayable != null && currentPlayable.getItem() != null
+                    && currentPlayable.getItem().isTagged(FeedItem.TAG_FAVORITE);
         }
     };
 
@@ -477,6 +517,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             sleepTimer = null;
         }
         EventBus.getDefault().unregister(this);
+        androidAutoConnectionState.removeObserver(androidAutoConnectionObserver);
         if (mediaLoaderDisposable != null) {
             mediaLoaderDisposable.dispose();
             mediaLoaderDisposable = null;
@@ -603,6 +644,9 @@ public class Media3PlaybackService extends MediaLibraryService {
     @OptIn(markerClass = UnstableApi.class)
     private void switchToPlayable(FeedMedia media) {
         currentPlayable = media;
+        if (androidAutoConnected) {
+            sessionCallback.refreshNotification(mediaSession);
+        }
         playbackStartPosition = Math.max(currentPlayable.getPosition(), 0);
         playedDurationCountedUntil = playbackStartPosition;
 

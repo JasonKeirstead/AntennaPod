@@ -78,6 +78,12 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
             = new SessionCommand("disable_sleep_timer", Bundle.EMPTY);
     public static final SessionCommand SESSION_COMMAND_EXTEND_SLEEP_TIMER
             = new SessionCommand("extend_sleep_timer", Bundle.EMPTY);
+    protected static final SessionCommand SESSION_COMMAND_MARK_PLAYED
+            = new SessionCommand("mark_played", Bundle.EMPTY);
+    protected static final SessionCommand SESSION_COMMAND_REMOVE_FROM_QUEUE
+            = new SessionCommand("remove_from_queue", Bundle.EMPTY);
+    protected static final SessionCommand SESSION_COMMAND_TOGGLE_FAVORITE
+            = new SessionCommand("toggle_favorite", Bundle.EMPTY);
 
     private static final String EXTRA_VALUE = "value";
 
@@ -123,6 +129,9 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 .add(SESSION_COMMAND_SET_SLEEP_TIMER)
                 .add(SESSION_COMMAND_DISABLE_SLEEP_TIMER)
                 .add(SESSION_COMMAND_EXTEND_SLEEP_TIMER)
+                .add(SESSION_COMMAND_MARK_PLAYED)
+                .add(SESSION_COMMAND_REMOVE_FROM_QUEUE)
+                .add(SESSION_COMMAND_TOGGLE_FAVORITE)
                 .build();
         Player.Commands playerCommands = new Player.Commands.Builder()
                 .addAllCommands()
@@ -196,7 +205,33 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                     .build());
         }
 
+        if (isAndroidAutoConnected()) {
+            buttons.add(new CommandButton.Builder(CommandButton.ICON_CHECK_CIRCLE_UNFILLED)
+                    .setSessionCommand(SESSION_COMMAND_MARK_PLAYED)
+                    .setDisplayName(context.getString(R.string.mark_as_played_label))
+                    .build());
+            buttons.add(new CommandButton.Builder(CommandButton.ICON_PLAYLIST_REMOVE)
+                    .setSessionCommand(SESSION_COMMAND_REMOVE_FROM_QUEUE)
+                    .setDisplayName(context.getString(R.string.remove_from_queue_label))
+                    .build());
+            boolean favorite = isCurrentEpisodeFavorite();
+            buttons.add(new CommandButton.Builder(
+                            favorite ? CommandButton.ICON_STAR_FILLED : CommandButton.ICON_STAR_UNFILLED)
+                    .setSessionCommand(SESSION_COMMAND_TOGGLE_FAVORITE)
+                    .setDisplayName(context.getString(
+                            favorite ? R.string.remove_from_favorite_label : R.string.add_to_favorite_label))
+                    .build());
+        }
+
         return buttons.build();
+    }
+
+    protected boolean isAndroidAutoConnected() {
+        return false;
+    }
+
+    protected boolean isCurrentEpisodeFavorite() {
+        return false;
     }
 
     @Override
