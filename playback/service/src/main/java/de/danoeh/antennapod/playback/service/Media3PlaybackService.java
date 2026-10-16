@@ -35,6 +35,7 @@ import de.danoeh.antennapod.event.PlayerErrorEvent;
 import de.danoeh.antennapod.event.StreamingConfirmationEvent;
 import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
+import de.danoeh.antennapod.event.QueueEvent;
 import de.danoeh.antennapod.event.playback.BufferUpdateEvent;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.event.playback.PlaybackServiceEvent;
@@ -347,7 +348,13 @@ public class Media3PlaybackService extends MediaLibraryService {
                 return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
             } else if (customCommand.customAction.equals(SESSION_COMMAND_REMOVE_FROM_QUEUE.customAction)) {
                 if (currentPlayable != null && currentPlayable.getItem() != null) {
+                    saveCurrentPosition();
                     DBWriter.removeQueueItem(Media3PlaybackService.this, true, currentPlayable.getItem());
+                    player.stop();
+                    player.clearMediaItems();
+                    currentPlayable = null;
+                    PlaybackPreferences.writeNoMediaPlaying();
+                    EventBus.getDefault().post(new PlayerStatusEvent());
                 }
                 return Futures.immediateFuture(new SessionResult(SessionResult.RESULT_SUCCESS));
             } else if (customCommand.customAction.equals(SESSION_COMMAND_TOGGLE_FAVORITE.customAction)) {
@@ -831,7 +838,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         MediaItem confirmItem = MediaItemAdapter.buildStreamingConfirmationItem(this,
                 R.raw.no_streaming,
                 getString(R.string.confirm_mobile_streaming_notification_title),
-                getString(R.string.confirm_mobile_streaming_notification_message));
+                getString(R.string.confirm_mobile_streaming_press_play));
         player.setMediaItem(confirmItem);
         player.setPlayWhenReady(false);
         player.prepare();
@@ -993,6 +1000,12 @@ public class Media3PlaybackService extends MediaLibraryService {
             volumeAdaptionFactor = event.getVolumeAdaptionSetting().getAdaptionFactor();
             applyVolumeAdaption(1.0f);
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    @SuppressWarnings("unused")
+    public void onQueueChanged(QueueEvent event) {
+        sessionCallback.notifyQueueChanged(mediaSession);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

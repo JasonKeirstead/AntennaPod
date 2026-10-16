@@ -375,6 +375,7 @@
     <string name="confirm_mobile_streaming_notification_message">Streaming over mobile data connection is disabled in the settings. Tap to stream anyway.</string>
     <string name="confirm_mobile_streaming_button_always">Always</string>
     <string name="confirm_mobile_streaming_button_once">Once</string>
+    <string name="confirm_mobile_streaming_press_play">Press play to stream anyway</string>
     <string name="already_downloaded">Episode is already downloaded</string>
 
     <!-- Mediaplayer messages -->

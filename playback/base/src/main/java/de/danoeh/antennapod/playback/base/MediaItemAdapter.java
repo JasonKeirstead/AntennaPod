@@ -212,6 +212,8 @@ public class MediaItemAdapter {
                 .build();
         MediaMetadata metadata = new MediaMetadata.Builder()
                 .setTitle(title)
+                .setSubtitle(description)
+                .setArtist(description)
                 .setDescription(description)
                 .setIsPlayable(true)
                 .setIsBrowsable(false)
