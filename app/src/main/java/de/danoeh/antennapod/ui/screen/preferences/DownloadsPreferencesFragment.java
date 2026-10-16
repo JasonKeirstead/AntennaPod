@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.net.download.serviceinterface.FeedUpdateManager;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.AnimatedPreferenceFragment;
 import de.danoeh.antennapod.ui.preferences.screen.ProxyDialog;
@@ -82,6 +83,9 @@ public class DownloadsPreferencesFragment extends AnimatedPreferenceFragment
         if (UserPreferences.PREF_UPDATE_INTERVAL_MINUTES.equals(key)
                 || UserPreferences.PREF_MOBILE_UPDATE.equals(key)) {
             FeedUpdateManager.getInstance().restartUpdateAlarm(getContext(), true);
+        }
+        if (UserPreferences.PREF_EPISODES_PER_PODCAST_LIMIT.equals(key)) {
+            DBWriter.removeEpisodesOverPodcastLimit(getContext(), UserPreferences.getEpisodesPerPodcastLimit());
         }
     }
 }
