@@ -71,7 +71,6 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_TAGS = "tags";
     private static final String PREF_EDIT_FEED_URL = "editFeedUrl";
     private static final String PREF_RECONNECT_LOCAL_FOLDER = "reconnectLocalFolder";
-    private static final String PREF_EPISODE_LIMIT = "feedEpisodeLimit";
 
     private Feed feed;
     private Disposable disposable;
@@ -142,13 +141,11 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     updateAutoDeleteSummary();
                     updateAutoDownloadEnabledSummary();
                     updateNewEpisodesActionSummary();
-                    updateEpisodeLimitSummary();
 
                     findPreference(PREF_RECONNECT_LOCAL_FOLDER).setVisible(feed.isLocalFeed());
                     if (feed.isLocalFeed()) {
                         findPreference(PREF_AUTHENTICATION).setVisible(false);
                         findPreference(PREF_AUTODOWNLOAD).setVisible(false);
-                        findPreference(PREF_EPISODE_LIMIT).setVisible(false);
                         findPreference(PREF_EPISODE_FILTER).setVisible(false);
                         findPreference(PREF_EDIT_FEED_URL).setVisible(false);
                     }
@@ -263,12 +260,6 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             updateNewEpisodesActionSummary();
             return false;
         });
-        findPreference(PREF_EPISODE_LIMIT).setOnPreferenceChangeListener((preference, newValue) -> {
-            feedPreferences.setEpisodeLimit(Integer.parseInt((String) newValue));
-            DBWriter.setFeedPreferences(feedPreferences);
-            updateEpisodeLimitSummary();
-            return false;
-        });
         findPreference(PREF_TAGS).setOnPreferenceClickListener(preference -> {
             TagSettingsDialog.newInstance(Collections.singletonList(feedPreferences))
                     .show(getChildFragmentManager(), TagSettingsDialog.TAG);
@@ -373,15 +364,6 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         };
         autoDownloadPreference.setSummary(summary);
         autoDownloadPreference.setValue("" + feedPreferences.getAutoDownload().code);
-    }
-
-    private void updateEpisodeLimitSummary() {
-        ListPreference episodeLimitPreference = findPreference(PREF_EPISODE_LIMIT);
-        int episodeLimit = feedPreferences.getEpisodeLimit();
-        episodeLimitPreference.setSummary(episodeLimit > 0
-                ? getResources().getQuantityString(R.plurals.feed_episode_limit_summary, episodeLimit, episodeLimit)
-                : getString(R.string.pref_episode_cache_unlimited));
-        episodeLimitPreference.setValue("" + episodeLimit);
     }
 
     private void addLocalFolderResult(final Uri uri) {

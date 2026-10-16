@@ -158,11 +158,6 @@
     <string name="feed_new_episodes_action_nothing">Nothing</string>
     <string name="feed_new_episodes_action_summary_autodownload">Automatic download enabled. Episodes are added to the inbox and then moved to the queue once downloaded.</string>
     <string name="feed_new_episodes_action_snackbar">Cannot be changed when automatic download is enabled.</string>
-    <string name="feed_episode_limit_title">Downloaded episode limit</string>
-    <plurals name="feed_episode_limit_summary">
-        <item quantity="one">Keep the newest %d downloaded episode</item>
-        <item quantity="other">Keep the newest %d downloaded episodes</item>
-    </plurals>
     <string name="episode_cleanup_never">Never</string>
     <string name="episode_cleanup_except_favorite_removal">When not favorited</string>
     <string name="episode_cleanup_queue_removal">When not in queue</string>
