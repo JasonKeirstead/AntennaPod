@@ -115,6 +115,7 @@ public class FeedPreferences implements Serializable {
     private int feedSkipEnding;
     private SkipSilence feedSkipSilence;
     private boolean showEpisodeNotification;
+    private int episodeLimit;
     private final Set<String> tags = new HashSet<>();
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, AutoDeleteAction autoDeleteAction,
@@ -313,5 +314,13 @@ public class FeedPreferences implements Serializable {
 
     public void setShowEpisodeNotification(boolean showEpisodeNotification) {
         this.showEpisodeNotification = showEpisodeNotification;
+    }
+
+    public int getEpisodeLimit() {
+        return episodeLimit;
+    }
+
+    public void setEpisodeLimit(int episodeLimit) {
+        this.episodeLimit = episodeLimit;
     }
 }

@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.InterruptedIOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import de.danoeh.antennapod.model.download.DownloadRequest;
@@ -22,8 +23,11 @@ import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.model.download.DownloadError;
 import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.sync.serviceinterface.EpisodeAction;
+import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.ui.transcript.TranscriptUtils;
 
 /**
@@ -114,6 +118,31 @@ public class MediaDownloadedHandler implements Runnable {
                     new EpisodeAction.Builder(item, EpisodeAction.DOWNLOAD)
                         .currentTimestamp()
                         .build());
+        }
+
+        if (item != null && item.getFeed().getPreferences() != null
+                && item.getFeed().getPreferences().getEpisodeLimit() > 0) {
+            deleteEpisodesOverLimit(context, item);
+        }
+    }
+
+    static void deleteEpisodesOverLimit(Context context, FeedItem downloadedItem) {
+        List<FeedItem> downloaded = DBReader.getFeedItemList(downloadedItem.getFeed(),
+                new FeedItemFilter(FeedItemFilter.DOWNLOADED), SortOrder.DATE_NEW_OLD, 0, Integer.MAX_VALUE);
+        int numToDelete = downloaded.size() - downloadedItem.getFeed().getPreferences().getEpisodeLimit();
+        for (int i = downloaded.size() - 1; i >= 0 && numToDelete > 0; i--) {
+            FeedItem episode = downloaded.get(i);
+            if (episode.getId() == downloadedItem.getId()
+                    || episode.isTagged(FeedItem.TAG_FAVORITE)
+                    || episode.getMedia().getId() == PlaybackPreferences.getCurrentlyPlayingFeedMediaId()) {
+                continue;
+            }
+            try {
+                DBWriter.deleteFeedMediaOfItem(context, episode.getMedia()).get();
+            } catch (InterruptedException | ExecutionException e) {
+                Log.e(TAG, "Deleting episode over limit failed", e);
+            }
+            numToDelete--;
         }
     }
 

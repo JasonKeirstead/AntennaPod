@@ -13,6 +13,7 @@ import java.util.List;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
+import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
@@ -59,7 +60,8 @@ public class AutomaticDownloadAlgorithm {
                     FeedPreferences feedPrefs = newItem.getFeed().getPreferences();
                     boolean shouldAdd = (autoDownloadQueueEnabled && newItem.isTagged(FeedItem.TAG_QUEUE))
                             || (feedPrefs.isAutoDownload(globalAutoDownloadEnabled)
-                            && feedPrefs.getFilter().shouldAutoDownload(newItem));
+                            && feedPrefs.getFilter().shouldAutoDownload(newItem)
+                            && isWithinEpisodeLimit(newItem));
                     if (shouldAdd) {
                         candidates.add(newItem);
                     }
@@ -103,6 +105,21 @@ public class AutomaticDownloadAlgorithm {
                 }
             }
         };
+    }
+
+    private boolean isWithinEpisodeLimit(FeedItem item) {
+        int episodeLimit = item.getFeed().getPreferences().getEpisodeLimit();
+        if (episodeLimit <= 0) {
+            return true;
+        }
+        List<FeedItem> newestEpisodes = DBReader.getFeedItemList(item.getFeed(),
+                FeedItemFilter.unfiltered(), SortOrder.DATE_NEW_OLD, 0, episodeLimit);
+        for (FeedItem episode : newestEpisodes) {
+            if (episode.getId() == item.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

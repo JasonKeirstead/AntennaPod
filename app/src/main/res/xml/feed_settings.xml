@@ -85,6 +85,13 @@
             android:key="includeAutoDownload"
             android:title="@string/auto_download_label" />
 
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+            android:entries="@array/feed_episode_limit_entries"
+            android:entryValues="@array/feed_episode_limit_values"
+            android:icon="@drawable/ic_storage"
+            android:key="feedEpisodeLimit"
+            android:title="@string/feed_episode_limit_title" />
+
         <Preference
             android:key="episodeFilter"
             android:summary="@string/episode_filters_description"

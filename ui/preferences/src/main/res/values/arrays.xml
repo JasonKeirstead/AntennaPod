@@ -135,6 +135,26 @@
         <item>-1</item>
     </string-array>
 
+    <string-array name="feed_episode_limit_entries">
+        <item>@string/pref_episode_cache_unlimited</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>25</item>
+    </string-array>
+
+    <string-array name="feed_episode_limit_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>25</item>
+    </string-array>
+
     <string-array name="mobile_update_entries">
         <item>@string/pref_mobileUpdate_refresh</item>
         <item>@string/pref_mobileUpdate_episode_download</item>
