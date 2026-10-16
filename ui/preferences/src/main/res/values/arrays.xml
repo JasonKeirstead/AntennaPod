@@ -153,6 +153,24 @@
         <item>sync</item>
     </string-array>
 
+    <string-array name="android_auto_tabs_entries">
+        <item>@string/current_playing_episode</item>
+        <item>@string/queue_label</item>
+        <item>@string/inbox_label</item>
+        <item>@string/downloads_label</item>
+        <item>@string/episodes_label</item>
+        <item>@string/subscriptions_label</item>
+    </string-array>
+
+    <string-array name="android_auto_tabs_values">
+        <item>continue_listening</item>
+        <item>queue</item>
+        <item>inbox</item>
+        <item>downloads</item>
+        <item>episodes</item>
+        <item>subscriptions</item>
+    </string-array>
+
     <string-array name="mobile_update_default_value">
         <item>images</item>
         <item>sync</item>

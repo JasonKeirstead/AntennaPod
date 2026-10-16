@@ -56,6 +56,7 @@ public abstract class UserPreferences {
     public static final String PREF_SHOW_TIME_LEFT = "showTimeLeft";
     public static final String PREF_PERSISTENT_NOTIFICATION = "prefPersistNotify";
     public static final String PREF_FULL_NOTIFICATION_BUTTONS = "prefFullNotificationButtons";
+    public static final String PREF_ANDROID_AUTO_TABS = "prefAndroidAutoTabs";
     private static final String PREF_SHOW_DOWNLOAD_REPORT = "prefShowDownloadReport";
     public static final String PREF_DEFAULT_PAGE = "prefDefaultPage";
     public static final String PREF_FILTER_FEED = "prefSubscriptionsFilter";
@@ -674,6 +675,15 @@ public abstract class UserPreferences {
     public static void setFullNotificationButtons(List<Integer> items) {
         String str = TextUtils.join(",", items);
         prefs.edit().putString(PREF_FULL_NOTIFICATION_BUTTONS, str).apply();
+    }
+
+    public static List<String> getAndroidAutoTabs() {
+        return Arrays.asList(TextUtils.split(prefs.getString(PREF_ANDROID_AUTO_TABS,
+                "continue_listening,queue,downloads,episodes,subscriptions"), ","));
+    }
+
+    public static void setAndroidAutoTabs(List<String> tabs) {
+        prefs.edit().putString(PREF_ANDROID_AUTO_TABS, TextUtils.join(",", tabs)).apply();
     }
 
     public static void setQueueLocked(boolean locked) {

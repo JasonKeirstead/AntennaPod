@@ -55,10 +55,11 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
     private static final String MEDIA_ID_EPISODES = "episodes";
     private static final String MEDIA_ID_SUBSCRIPTIONS = "subscriptions";
     private static final String MEDIA_ID_CONTINUE_LISTENING = "continue_listening";
+    private static final String MEDIA_ID_INBOX = "inbox";
     private static final int CONTINUE_LISTENING_NUM_EPISODES = 8;
     private static final ImmutableList<String> BROWSABLE_MEDIA_IDS = ImmutableList.of(
             MEDIA_ID_ROOT, MEDIA_ID_QUEUE, MEDIA_ID_DOWNLOADS, MEDIA_ID_EPISODES,
-            MEDIA_ID_SUBSCRIPTIONS, MEDIA_ID_CONTINUE_LISTENING);
+            MEDIA_ID_SUBSCRIPTIONS, MEDIA_ID_CONTINUE_LISTENING, MEDIA_ID_INBOX);
 
     protected static final SessionCommand SESSION_COMMAND_REWIND
             = new SessionCommand("rewind", Bundle.EMPTY);
@@ -157,6 +158,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
     public void notifyQueueChanged(MediaLibraryService.MediaLibrarySession session) {
         session.notifyChildrenChanged(MEDIA_ID_QUEUE, Integer.MAX_VALUE, null);
         session.notifyChildrenChanged(MEDIA_ID_CONTINUE_LISTENING, Integer.MAX_VALUE, null);
+        session.notifyChildrenChanged(MEDIA_ID_INBOX, Integer.MAX_VALUE, null);
     }
 
     @UnstableApi
@@ -473,12 +475,15 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
 
         switch (parentId) {
             case MEDIA_ID_ROOT:
-                Single.fromCallable(() -> ImmutableList.of(
-                                createBrowsableMediaItem(MEDIA_ID_CONTINUE_LISTENING),
-                                createBrowsableMediaItem(MEDIA_ID_QUEUE),
-                                createBrowsableMediaItem(MEDIA_ID_DOWNLOADS),
-                                createBrowsableMediaItem(MEDIA_ID_EPISODES),
-                                createBrowsableMediaItem(MEDIA_ID_SUBSCRIPTIONS)))
+                Single.fromCallable(() -> {
+                    ImmutableList.Builder<MediaItem> tabs = ImmutableList.builder();
+                    for (String tab : UserPreferences.getAndroidAutoTabs()) {
+                        if (BROWSABLE_MEDIA_IDS.contains(tab) && !MEDIA_ID_ROOT.equals(tab)) {
+                            tabs.add(createBrowsableMediaItem(tab));
+                        }
+                    }
+                    return tabs.build();
+                })
                         .subscribeOn(Schedulers.io())
                         .subscribe(items -> future.set(LibraryResult.ofItemList(items, params)),
                                 future::setException);
@@ -525,6 +530,8 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                         case MEDIA_ID_EPISODES -> DBReader.getEpisodes(page * pageSize, pageSize,
                                 new FeedItemFilter(UserPreferences.getPrefFilterAllEpisodes()),
                                 UserPreferences.getAllEpisodesSortOrder());
+                        case MEDIA_ID_INBOX -> DBReader.getEpisodes(page * pageSize, pageSize,
+                                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder());
                         default -> throw new IllegalArgumentException("Unknown parentId: " + parentId);
                     };
                 })
@@ -617,6 +624,12 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                 int numEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter());
                 return MediaItemAdapter.from(context, MEDIA_ID_EPISODES,
                         context.getString(R.string.episodes_label), R.drawable.ic_feed_black,
+                        context.getResources().getQuantityString(R.plurals.num_episodes, numEpisodes, numEpisodes));
+            }
+            case MEDIA_ID_INBOX: {
+                int numEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW));
+                return MediaItemAdapter.from(context, MEDIA_ID_INBOX,
+                        context.getString(R.string.inbox_label), R.drawable.ic_inbox_black,
                         context.getResources().getQuantityString(R.plurals.num_episodes, numEpisodes, numEpisodes));
             }
             case MEDIA_ID_SUBSCRIPTIONS:

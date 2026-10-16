@@ -22,6 +22,7 @@ import de.danoeh.antennapod.ui.screen.subscriptions.EpisodeListGlobalDefaultSort
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -71,6 +72,11 @@ public class UserInterfacePreferencesFragment extends AnimatedPreferenceFragment
         findPreference(UserPreferences.PREF_FULL_NOTIFICATION_BUTTONS)
                 .setOnPreferenceClickListener(preference -> {
                     showFullNotificationButtonsDialog();
+                    return true;
+                });
+        findPreference(UserPreferences.PREF_ANDROID_AUTO_TABS)
+                .setOnPreferenceClickListener(preference -> {
+                    showAndroidAutoTabsDialog();
                     return true;
                 });
         findPreference(UserPreferences.PREF_GLOBAL_DEFAULT_SORTED_ORDER)
@@ -187,6 +193,37 @@ public class UserInterfacePreferencesFragment extends AnimatedPreferenceFragment
             } else {
                 completeListener.onClick(dialog, AlertDialog.BUTTON_POSITIVE);
                 dialog.cancel();
+            }
+        });
+    }
+
+    private void showAndroidAutoTabsDialog() {
+        final String[] tabIds = getResources().getStringArray(R.array.android_auto_tabs_values);
+        final List<String> selectedTabs = UserPreferences.getAndroidAutoTabs();
+        final boolean[] checked = new boolean[tabIds.length];
+        for (int i = 0; i < tabIds.length; i++) {
+            checked[i] = selectedTabs.contains(tabIds[i]);
+        }
+        final AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.pref_android_auto_tabs_title)
+                .setMultiChoiceItems(R.array.android_auto_tabs_entries, checked,
+                        (d, which, isChecked) -> checked[which] = isChecked)
+                .setPositiveButton(R.string.confirm_label, null)
+                .setNegativeButton(R.string.cancel_label, null)
+                .show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            List<String> tabs = new ArrayList<>();
+            for (int i = 0; i < tabIds.length; i++) {
+                if (checked[i]) {
+                    tabs.add(tabIds[i]);
+                }
+            }
+            if (tabs.isEmpty() || tabs.size() > 4) {
+                Snackbar.make(dialog.getListView(), R.string.pref_android_auto_tabs_error,
+                        Snackbar.LENGTH_SHORT).show();
+            } else {
+                UserPreferences.setAndroidAutoTabs(tabs);
+                dialog.dismiss();
             }
         });
     }

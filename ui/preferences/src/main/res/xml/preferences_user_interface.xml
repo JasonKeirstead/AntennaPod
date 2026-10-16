@@ -54,6 +54,10 @@
                 android:key="prefFullNotificationButtons"
                 android:summary="@string/pref_full_notification_buttons_sum"
                 android:title="@string/pref_full_notification_buttons_title"/>
+        <Preference
+                android:key="prefAndroidAutoTabs"
+                android:summary="@string/pref_android_auto_tabs_sum"
+                android:title="@string/pref_android_auto_tabs_title"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/behavior">
         <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
