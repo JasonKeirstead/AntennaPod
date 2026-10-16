@@ -220,6 +220,7 @@ public abstract class FeedDatabaseWriter {
 
         // We need to add to queue after items are saved to database
         DBWriter.addQueueItem(context, itemsToAddToQueue.toArray(new FeedItem[0]));
+        DBWriter.removeEpisodesOverPodcastLimit(context, UserPreferences.getEpisodesPerPodcastLimit());
 
         adapter.close();
 

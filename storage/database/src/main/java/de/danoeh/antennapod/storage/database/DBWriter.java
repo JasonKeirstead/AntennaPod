@@ -26,8 +26,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -691,6 +693,39 @@ public class DBWriter {
             adapter.close();
             EventBus.getDefault().post(new FeedItemEvent(Collections.emptyList(), true));
         });
+    }
+
+    public static Future<?> removeEpisodesOverPodcastLimit(final Context context, final int limit) {
+        return runOnDbThread(() -> {
+            if (limit <= 0) {
+                return;
+            }
+            List<FeedItem> queueItemsOverLimit = getEpisodesOverPodcastLimit(DBReader.getQueue(), limit);
+            long[] queueItemIds = new long[queueItemsOverLimit.size()];
+            for (int i = 0; i < queueItemIds.length; i++) {
+                queueItemIds[i] = queueItemsOverLimit.get(i).getId();
+            }
+            removeQueueItemSynchronous(context, false, queueItemIds);
+            List<FeedItem> inboxItemsOverLimit = getEpisodesOverPodcastLimit(DBReader.getEpisodes(0,
+                    Integer.MAX_VALUE, new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD), limit);
+            if (!inboxItemsOverLimit.isEmpty()) {
+                markItemsPlayed(FeedItem.UNPLAYED, false, inboxItemsOverLimit);
+            }
+        });
+    }
+
+    private static List<FeedItem> getEpisodesOverPodcastLimit(List<FeedItem> items, int limit) {
+        FeedItemPermutors.getPermutor(SortOrder.DATE_NEW_OLD).reorder(items);
+        Map<Long, Integer> episodesPerPodcast = new HashMap<>();
+        List<FeedItem> episodesOverLimit = new ArrayList<>();
+        for (FeedItem item : items) {
+            int count = episodesPerPodcast.merge(item.getFeedId(), 1, Integer::sum);
+            if (count > limit && !(item.hasMedia()
+                    && item.getMedia().getId() == PlaybackPreferences.getCurrentlyPlayingFeedMediaId())) {
+                episodesOverLimit.add(item);
+            }
+        }
+        return episodesOverLimit;
     }
 
     static Future<?> addNewFeed(final Context context, final Feed... feeds) {

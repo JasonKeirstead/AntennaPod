@@ -547,6 +547,8 @@
     <string name="pref_theme_title_light">Light</string>
     <string name="pref_theme_title_dark">Dark</string>
     <string name="pref_episode_cache_unlimited">Unlimited</string>
+    <string name="pref_episodes_per_podcast_limit_title">Inbox and queue limit per podcast</string>
+    <string name="pref_episodes_per_podcast_limit_sum">Keep only the newest episodes of each podcast in the inbox and in the queue. Older episodes are removed from these lists but stay in the podcast.</string>
     <string name="pref_playback_speed_sum">Customize the speeds available for variable speed playback</string>
     <string name="pref_feed_playback_speed_sum">The speed to use when starting audio playback for episodes in this podcast</string>
     <string name="pref_feed_skip">Auto skip</string>

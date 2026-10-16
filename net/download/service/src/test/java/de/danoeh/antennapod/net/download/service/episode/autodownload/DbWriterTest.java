@@ -829,4 +829,31 @@ public class DbWriterTest {
         }
         return itemIds;
     }
+
+    @Test
+    public void testRemoveEpisodesOverPodcastLimit() throws Exception {
+        Feed feed = new Feed("url", null, "title");
+        List<FeedItem> items = new ArrayList<>();
+        feed.setItems(items);
+        for (int i = 0; i < 6; i++) {
+            items.add(new FeedItem(0, "title " + i, "id " + i, "link", new Date(i * 1000L),
+                    i < 3 ? FeedItem.NEW : FeedItem.UNPLAYED, feed));
+        }
+        withPodDB(adapter -> {
+            adapter.setCompleteFeed(feed);
+            adapter.setQueue(items.subList(3, 6));
+        });
+
+        DBWriter.removeEpisodesOverPodcastLimit(context, 2).get(TIMEOUT, TimeUnit.SECONDS);
+        Awaitility.await().timeout(2, TimeUnit.SECONDS)
+                .until(() -> !DBReader.getFeedItem(items.get(0).getId()).isNew());
+
+        List<Long> queueIds = toItemIds(DBReader.getQueue());
+        assertEquals(2, queueIds.size());
+        assertTrue(queueIds.contains(items.get(4).getId()));
+        assertTrue(queueIds.contains(items.get(5).getId()));
+        assertTrue(DBReader.getFeedItem(items.get(1).getId()).isNew());
+        assertTrue(DBReader.getFeedItem(items.get(2).getId()).isNew());
+        assertFalse(DBReader.getFeedItem(items.get(0).getId()).isPlayed());
+    }
 }

@@ -15,6 +15,7 @@ import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.net.download.serviceinterface.DownloadServiceInterface;
 import de.danoeh.antennapod.storage.database.DBReader;
+import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.net.common.NetworkUtils;
 
@@ -100,6 +101,7 @@ public class AutomaticDownloadAlgorithm {
                     for (FeedItem episode : itemsToDownload) {
                         DownloadServiceInterface.get().download(context, episode);
                     }
+                    DBWriter.removeEpisodesOverPodcastLimit(context, UserPreferences.getEpisodesPerPodcastLimit());
                 }
             }
         };

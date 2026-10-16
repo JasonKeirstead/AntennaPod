@@ -102,6 +102,7 @@ public abstract class UserPreferences {
     public static final String PREF_MOBILE_UPDATE = "prefMobileUpdateTypes";
     public static final String PREF_EPISODE_CLEANUP = "prefEpisodeCleanup";
     public static final String PREF_EPISODE_CACHE_SIZE = "prefEpisodeCacheSize";
+    public static final String PREF_EPISODES_PER_PODCAST_LIMIT = "prefEpisodesPerPodcastLimit";
     public static final String PREF_AUTODL_GLOBAL = "prefEnableAutoDl";
     public static final String PREF_AUTODL_QUEUE = "prefEnableAutoDlQueue";
     public static final String PREF_ENABLE_AUTODL_ON_BATTERY = "prefEnableAutoDownloadOnBattery";
@@ -566,6 +567,10 @@ public abstract class UserPreferences {
      */
     public static int getEpisodeCacheSize() {
         return Integer.parseInt(prefs.getString(PREF_EPISODE_CACHE_SIZE, "20"));
+    }
+
+    public static int getEpisodesPerPodcastLimit() {
+        return Integer.parseInt(prefs.getString(PREF_EPISODES_PER_PODCAST_LIMIT, "0"));
     }
 
     public static boolean isEnableAutodownloadGlobal() {
